@@ -78,7 +78,7 @@ jobs:
 
           mkdir -p android/app/src/main/java/com/proaccounting/offline
 
-          cp native-android/print/MainActivity.java \
+          cp .native-android/print/MainActivity.java \
              android/app/src/main/java/com/proaccounting/offline/MainActivity.java
 
       - name: Sync Capacitor
