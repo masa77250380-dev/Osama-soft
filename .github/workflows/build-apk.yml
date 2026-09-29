@@ -28,17 +28,25 @@ jobs:
         shell: bash
         run: |
           set -e
+
           SDK_DIR="${ANDROID_HOME:-$HOME/.android/sdk}"
+
           mkdir -p "$SDK_DIR/cmdline-tools"
           cd "$SDK_DIR/cmdline-tools"
+
           if [ ! -x latest/bin/sdkmanager ]; then
             rm -rf latest commandlinetools
-            curl -fsSL -o commandlinetools.zip https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip
+            curl -fsSL -o commandlinetools.zip \
+              https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip
+
             mkdir -p latest
+
             unzip -q commandlinetools.zip -d latest-tmp
             mv latest-tmp/cmdline-tools/* latest/
+
             rm -rf latest-tmp commandlinetools.zip
           fi
+
           echo "ANDROID_HOME=$SDK_DIR" >> "$GITHUB_ENV"
           echo "$SDK_DIR/platform-tools" >> "$GITHUB_PATH"
           echo "$SDK_DIR/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
@@ -47,40 +55,45 @@ jobs:
         shell: bash
         run: |
           set -e
+
           SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+
           yes | "$SDKMANAGER" --licenses > /dev/null || true
-          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+          "$SDKMANAGER" \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0"
 
       - name: Install npm packages
-        working-directory: android-app
         run: npm install
 
       - name: Generate Android project
-        working-directory: android-app
         run: npx cap add android
 
       - name: Install native Android print bridge
-        working-directory: android-app
         shell: bash
         run: |
           set -e
+
           mkdir -p android/app/src/main/java/com/proaccounting/offline
-          cp native-android/print/MainActivity.java android/app/src/main/java/com/proaccounting/offline/MainActivity.java
+
+          cp native-android/print/MainActivity.java \
+             android/app/src/main/java/com/proaccounting/offline/MainActivity.java
 
       - name: Sync Capacitor
-        working-directory: android-app
         run: npx cap sync android
 
       - name: Make Gradle executable
-        working-directory: android-app/android
+        working-directory: android
         run: chmod +x gradlew
 
       - name: Build debug APK
-        working-directory: android-app/android
+        working-directory: android
         run: ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: pro-accounting-stage7-apk
-          path: android-app/android/app/build/outputs/apk/debug/app-debug.apk
+          name: pro-accounting-stage8-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
