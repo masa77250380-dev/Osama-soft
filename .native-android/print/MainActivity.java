@@ -107,7 +107,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
-    protected void onDestroy() {
+public void onDestroy() {
         for (WebView view : printViews) {
             try { view.destroy(); } catch (Exception ignored) {}
         }
