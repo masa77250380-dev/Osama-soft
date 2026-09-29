@@ -14,3 +14,6 @@
 
 الناتج سيكون Artifact باسم:
 `pro-accounting-stage7-apk`
+
+
+Stage 8: إصلاح الطباعة الأصلية في Android وتفعيل التكبير/التصغير بإيماءة الإصبع عبر WebView.
