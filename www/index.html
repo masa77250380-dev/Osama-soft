@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=0.5,maximum-scale=5,user-scalable=yes" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes" />
   <title>نظام محاسبي احترافي - الإصدار المحسن</title>
   <meta name="description" content="نظام محاسبي متكامل مع دليل محاسبي ديناميكي، طباعة احترافية، وإدارة شاملة للعمليات." />
   <style>
@@ -544,6 +544,8 @@
       grid-template-columns: 2.2fr 1.8fr 0.9fr 1fr 1.1fr 1.1fr 2fr 0.5fr;
     }
 
+    .entry-grid-scroll, #receiptEntries, #paymentEntries, #journalEntries { overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; }
+    .entry-row, .entry-row-header, .journal-entry-row { min-width: 1120px; }
     .entry-row-header {
       display: grid;
       grid-template-columns: 2.2fr 1.8fr 0.9fr 1fr 1.1fr 1.1fr 2fr 0.5fr;
@@ -556,10 +558,7 @@
     }
 
     @media (max-width: 900px) {
-      .entry-grid-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-      #receiptEntries, #paymentEntries, #journalEntries { overflow-x: auto; -webkit-overflow-scrolling: touch; }
       .entry-row, .entry-row-header, .journal-entry-row {
-        min-width: 1120px;
         grid-template-columns: minmax(190px,2.2fr) minmax(165px,1.8fr) minmax(80px,.9fr) minmax(95px,1fr) minmax(105px,1.1fr) minmax(105px,1.1fr) minmax(180px,2fr) minmax(55px,.5fr);
       }
       .entry-row-header { display: grid; }
@@ -1244,18 +1243,7 @@
       color: white;
       border-color: var(--primary);
     }
-  
-    /* ===== Stage 6: Android transaction-grid usability ===== */
-    body { overflow-x: hidden; }
-    .entry-grid-scroll, #receiptEntries, #paymentEntries, #journalEntries {
-      overflow-x: auto !important; -webkit-overflow-scrolling: touch;
-    }
-    .entry-row, .entry-row-header, .journal-entry-row {
-      grid-template-columns: minmax(190px,2.2fr) minmax(165px,1.8fr) minmax(80px,.9fr) minmax(95px,1fr) minmax(105px,1.1fr) minmax(105px,1.1fr) minmax(180px,2fr) minmax(55px,.5fr) !important;
-      min-width: 1120px !important;
-    }
-    @media (max-width: 900px) { .entry-row-header { display: grid !important; } }
-</style>
+  </style>
 </head>
 <body>
 
@@ -1504,7 +1492,7 @@
             </div>
             <div id="coaTemplatePreview" style="margin-top:1rem"></div>
             <div class="row no-print" style="margin-top:1rem;gap:0.75rem">
-                <button onclick="appPrint()" class="btn-ghost">🖨️ طباعة المعاينة</button>
+                <button onclick="window.print()" class="btn-ghost">🖨️ طباعة المعاينة</button>
                 <button id="applyCoaTemplateBtn" class="btn-success" onclick="applyDefaultChartTemplate()">✅ تنزيل هذا الدليل إلى النظام</button>
             </div>
         </div>
@@ -1772,7 +1760,7 @@
     <section id="reports" class="card hidden">
       <div class="section-header">
           <h2 class="section-title">📈 التقارير المالية</h2>
-          <button onclick="appPrint()" class="btn-ghost no-print">🖨️ طباعة التقرير الحالي</button>
+          <button onclick="window.print()" class="btn-ghost no-print">🖨️ طباعة التقرير الحالي</button>
       </div>
       
       <div class="card no-print" style="background:var(--light)">
@@ -1818,7 +1806,7 @@
     <section id="statements" class="card hidden">
       <div class="section-header">
           <h2 class="section-title">📋 كشوف الحسابات</h2>
-          <button onclick="appPrint()" class="btn-ghost no-print">🖨️ طباعة الكشف</button>
+          <button onclick="window.print()" class="btn-ghost no-print">🖨️ طباعة الكشف</button>
       </div>
       <div class="card no-print" style="background:var(--light)">
           <div class="grid cols-3">
@@ -2205,7 +2193,7 @@
     <section id="auditLog" class="card hidden">
       <div class="section-header">
         <h2 class="section-title">🛡️ شاشة الرقابة</h2>
-        <div class="row no-print"><button onclick="appPrint()" class="btn-ghost">🖨️ طباعة</button></div>
+        <div class="row no-print"><button onclick="window.print()" class="btn-ghost">🖨️ طباعة</button></div>
       </div>
       <p class="muted">سجل بكل عمليات الإضافة والتعديل والحذف على السندات والقيود، مع تاريخ الإجراء وعدد مرات التعديل لكل عملية.</p>
       <div class="row no-print" style="margin-bottom:1rem">
@@ -2237,7 +2225,7 @@
     <section id="adminReports" class="card hidden">
       <div class="section-header">
         <h2 class="section-title">🧭 التقارير الإدارية</h2>
-        <div class="row no-print"><button onclick="appPrint()" class="btn-ghost">🖨️ طباعة</button></div>
+        <div class="row no-print"><button onclick="window.print()" class="btn-ghost">🖨️ طباعة</button></div>
       </div>
       <div class="grid cols-3">
         <div><label>من تاريخ</label><input id="adminReportFrom" type="date" /></div>
@@ -2277,7 +2265,7 @@
     <section id="currencies" class="card hidden">
       <div class="section-header">
         <h2 class="section-title">💱 العملات وأسعار الصرف</h2>
-        <div class="row no-print"><button onclick="appPrint()" class="btn-ghost">🖨️ طباعة</button></div>
+        <div class="row no-print"><button onclick="window.print()" class="btn-ghost">🖨️ طباعة</button></div>
       </div>
       <div class="card" style="background:var(--light)">
         <h3>إضافة/تعديل عملة</h3>
@@ -2512,33 +2500,6 @@
   </div>
 
   <script>
-// Android native printing bridge. Falls back to the browser print dialog when
-// the APK native bridge is not available (e.g. normal browser use).
-function printHtml(html) {
-  try {
-    if (window.AndroidPrint && typeof window.AndroidPrint.printHtml === 'function') {
-      window.AndroidPrint.printHtml(String(html || ''));
-      return;
-    }
-  } catch (e) {
-    console.warn('Native print bridge failed:', e);
-  }
-  try {
-    const w = window.open('', '_blank');
-    if (w) {
-      w.document.write(html || document.documentElement.outerHTML);
-      w.document.close();
-      setTimeout(() => w.print(), 250);
-      return;
-    }
-  } catch (e) {}
-  try { window.print(); } catch (e) {}
-}
-function appPrint() {
-  printHtml(document.documentElement.outerHTML);
-}
-</script>
-<script>
     // ========================================
     // Enhanced State Management
     // ========================================
@@ -2830,7 +2791,7 @@ function appPrint() {
         content += `<tr><td>${acc ? acc.name : 'حساب محذوف'}</td><td>${an ? an.name : '-'}</td><td>${e.currency}</td><td>${e.debit ? fmt(e.debit) : '-'}</td><td>${e.credit ? fmt(e.credit) : '-'}</td><td>${e.note || ''}</td></tr>`;
       });
       content += `</tbody></table>`;
-      content += `<div class="row no-print" style="margin-top:1rem"><button class="btn-ghost" onclick="appPrint()">🖨️ طباعة</button></div>`;
+      content += `<div class="row no-print" style="margin-top:1rem"><button class="btn-ghost" onclick="window.print()">🖨️ طباعة</button></div>`;
       showModal('استعراض عملية محذوفة', content);
     }
 
@@ -2875,7 +2836,7 @@ function appPrint() {
       }
       content += `</tbody></table>`;
       content += `<p class="muted" style="margin-top:0.5rem">الخلايا المُظلّلة هي الحقول التي تغيّرت فعلياً بين النسختين.</p>`;
-      content += `<div class="row no-print" style="margin-top:1rem"><button class="btn-ghost" onclick="appPrint()">🖨️ طباعة</button></div>`;
+      content += `<div class="row no-print" style="margin-top:1rem"><button class="btn-ghost" onclick="window.print()">🖨️ طباعة</button></div>`;
       showModal('مقارنة التعديل', content);
     }
 
@@ -2999,7 +2960,7 @@ function appPrint() {
       });
       if (rows.length === 0) content += `<tr><td colspan="7" style="text-align:center;color:var(--muted)">لا توجد عمليات</td></tr>`;
       content += `</tbody></table>`;
-      content += `<div class="row no-print" style="margin-top:1rem"><button class="btn-ghost" onclick="appPrint()">🖨️ طباعة</button></div>`;
+      content += `<div class="row no-print" style="margin-top:1rem"><button class="btn-ghost" onclick="window.print()">🖨️ طباعة</button></div>`;
       showModal('تفاصيل الحركة', content);
     }
 
@@ -4650,11 +4611,65 @@ function appPrint() {
             ${document.getElementById('printHeader').outerHTML}
             ${content}
             ${document.getElementById('printFooter').outerHTML}
-          </body>
+          
+<script id="android-native-print-bridge">
+(function () {
+  const isAndroidCapacitor = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  const androidPrint = window.AndroidPrint;
+  if (!isAndroidCapacitor || !androidPrint || typeof androidPrint.printHtml !== 'function') return;
+
+  function nativePrintHtml(html) {
+    try {
+      androidPrint.printHtml(String(html || ''));
+    } catch (e) {
+      console.error('Android native print failed:', e);
+      alert('تعذر فتح خدمة الطباعة في الجهاز.');
+    }
+  }
+
+  window.__nativePrintHtml = nativePrintHtml;
+
+  // Buttons/reports that use window.print() print the currently visible report.
+  const originalPrint = window.print.bind(window);
+  window.print = function () {
+    try {
+      nativePrintHtml('<!doctype html>' + document.documentElement.outerHTML);
+    } catch (e) {
+      console.warn('Native print fallback:', e);
+      originalPrint();
+    }
+  };
+
+  // Existing report functions build a complete HTML document with window.open(),
+  // write(), close(), then print(). Capture that document and send it to Android.
+  const originalOpen = window.open.bind(window);
+  window.open = function (url, target, features) {
+    if (url === '' || url == null) {
+      let buffer = '';
+      let closed = false;
+      const fakeDocument = {
+        write: function (html) { if (!closed) buffer += String(html || ''); },
+        writeln: function (html) { if (!closed) buffer += String(html || '') + '\n'; },
+        close: function () { closed = true; }
+      };
+      return {
+        document: fakeDocument,
+        print: function () { nativePrintHtml(buffer); },
+        close: function () { closed = true; }
+      };
+    }
+    return originalOpen(url, target, features);
+  };
+})();
+</script>
+</body>
         </html>
       `;
       
-      printHtml(printContent);
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.print();
     }
 
     // ========================================
@@ -5328,7 +5343,10 @@ function appPrint() {
         </html>
       `;
       
-      printHtml(printContent);
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.print();
     }
     
     function printDashboard() {
@@ -5417,7 +5435,10 @@ function appPrint() {
         </html>
       `;
       
-      printHtml(printContent);
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.print();
     }
 
     // ========================================
@@ -6846,7 +6867,7 @@ function showTransactionDetails(transId) {
         <tfoot><tr style="font-weight:bold"><td colspan="5">الإجمالي</td><td>${fmt(total)} ${state.baseCurrency}</td></tr></tfoot></table>`;
       document.getElementById('reportView').innerHTML = generateReportHTML('سجل فروق العملة', '', '', table);
       document.querySelector('#mainTabs .tab[data-tab="reports"]').click();
-      setTimeout(() => appPrint(), 300);
+      setTimeout(() => window.print(), 300);
     }
 
     document.getElementById('analyzeFxDiff').addEventListener('click', analyzeFxDifferences);
@@ -7682,7 +7703,10 @@ function forceAccountingEquationBalance() {
         </html>
       `;
       
-      printHtml(printContent);
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.print();
     }
 
     // ========================================
@@ -8597,7 +8621,10 @@ function printVoucher(transactionId, type) {
     ${document.getElementById('printFooter').outerHTML}
     </body></html>`;
   
-  printHtml(printContent);
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(printContent);
+  printWindow.document.close();
+  printWindow.print();
 }
     
     function printReceiptsSummary() {
@@ -8673,7 +8700,10 @@ function printVoucher(transactionId, type) {
         </html>
       `;
       
-      printHtml(printContent);
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.print();
     }
     
     function printPaymentsSummary() {
@@ -8749,7 +8779,10 @@ function printVoucher(transactionId, type) {
         </html>
       `;
       
-      printHtml(printContent);
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.print();
     }
     
     function printJournalsSummary() {
@@ -8829,7 +8862,10 @@ function printVoucher(transactionId, type) {
         </html>
       `;
       
-      printHtml(printContent);
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.print();
     }
 
     // ========================================
@@ -10736,7 +10772,7 @@ document.getElementById('runBS').addEventListener('click', () => {
       const fromDate = document.getElementById('closeFrom').value;
       const toDate = document.getElementById('closeTo').value;
       analyzePeriodClosing();
-      appPrint();
+      window.print();
     });
 
     // Update closing accounts when changed
