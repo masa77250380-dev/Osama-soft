@@ -46,15 +46,15 @@
 
   async function execute(sql, values) {
     const p = await openNative();
-    try { return await p.run({ statement: sql, values: values || [] }); }
-    catch (_) { return await p.run(sql, values || []); }
+    try { return await p.run({ database: DB_NAME, statement: sql, values: values || [] }); }
+    catch (_) { return await p.run({ database: DB_NAME, statement: sql, values: values || [] }); }
   }
 
   async function query(sql, values) {
     const p = await openNative();
     let result;
-    try { result = await p.query({ statement: sql, values: values || [] }); }
-    catch (_) { result = await p.query(sql, values || []); }
+    try { result = await p.query({ database: DB_NAME, statement: sql, values: values || [] }); }
+    catch (_) { result = await p.query({ database: DB_NAME, statement: sql, values: values || [] }); }
 
     if (!result) return [];
     if (Array.isArray(result)) return result;
