@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">أسامة سوفت</string>
+    <string name="title_activity_main">أسامة سوفت</string>
+    <string name="package_name">com.osamasoft.accounting</string>
+    <string name="custom_url_scheme">com.osamasoft.accounting</string>
+</resources>

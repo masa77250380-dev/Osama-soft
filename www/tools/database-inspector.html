@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>أسامة سوفت - مركز قاعدة البيانات</title>
+<style>
+body{font-family:system-ui,Tahoma,Arial;margin:0;background:#f5f7fa;color:#17202a}
+header{padding:18px;background:#fff;border-bottom:1px solid #ddd;position:sticky;top:0}
+main{padding:16px;max-width:1100px;margin:auto}.card{background:#fff;border:1px solid #ddd;border-radius:12px;padding:14px;margin-bottom:14px}
+button{border:1px solid #bbb;background:#fff;border-radius:8px;padding:9px 12px;cursor:pointer;margin:3px}
+button.primary{font-weight:700}.status{padding:10px;border-radius:8px;background:#eef3f7;margin-top:8px}
+table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #eee;padding:8px;text-align:right;vertical-align:top}pre{white-space:pre-wrap;overflow:auto;max-height:420px;background:#f8f8f8;padding:10px;border-radius:8px;direction:ltr;text-align:left}
+</style>
+</head>
+<body>
+<header><strong>🗄️ مركز قاعدة البيانات — أسامة سوفت</strong></header>
+<main>
+<div class="card"><div>محرك قاعدة البيانات: <strong id="engine">...</strong></div><div>اسم قاعدة البيانات: <strong id="dbname">...</strong></div><div id="status" class="status">جاري الاتصال...</div></div>
+<div class="card"><button class="primary" id="refresh">تحديث الجداول</button><button id="export">تصدير JSON</button><div id="tables"></div></div>
+<div class="card"><h3 id="title">تفاصيل الجدول</h3><div id="detail"></div></div>
+</main>
+<script src="../database/db-service.js"></script>
+<script>
+const $=id=>document.getElementById(id); const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+$('engine').textContent=window.OsamaSoftDB.isAvailable()?'native-sqlite':'غير متاح'; $('dbname').textContent=window.OsamaSoftDB.name;
+async function load(){try{await OsamaSoftDB.initialize();$('status').textContent='متصلة — قاعدة SQLite المنظمة جاهزة';const rows=await OsamaSoftDB.tables();const tables=rows.filter(x=>x.type==='table');let h='<table><thead><tr><th>الجدول</th><th>عدد الصفوف</th><th>إجراء</th></tr></thead><tbody>';for(const t of tables){const n=await OsamaSoftDB.countRows(t.name);h+=`<tr><td>${esc(t.name)}</td><td>${n}</td><td><button onclick="showTable('${esc(t.name)}')">عرض</button></td></tr>`}h+='</tbody></table>';$('tables').innerHTML=h}catch(e){$('status').textContent='خطأ: '+e.message}}
+window.showTable=async function(name){$('title').textContent='الجدول: '+name;const cols=await OsamaSoftDB.tableInfo(name);const rows=await OsamaSoftDB.sampleRows(name,100);$('detail').innerHTML='<h4>الأعمدة</h4><pre>'+esc(JSON.stringify(cols,null,2))+'</pre><h4>الصفوف (حتى 100)</h4><pre>'+esc(JSON.stringify(rows,null,2))+'</pre>'};
+$('refresh').onclick=load;$('export').onclick=async()=>{const data=await OsamaSoftDB.exportDatabaseJson();const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='osama-soft-database-export.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};load();
+</script>
+</body></html>
