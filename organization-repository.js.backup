@@ -12,13 +12,7 @@
     return id;
   }
 
-  async function ensureDatabase() {
-    if (!global.OsamaSoftDB) throw new Error("خدمة قاعدة SQLite غير متاحة");
-    await global.OsamaSoftDB.initialize();
-  }
-
   async function companies() {
-    await ensureDatabase();
     return global.OsamaSoftDB.query('SELECT * FROM companies ORDER BY id');
   }
 
@@ -27,7 +21,6 @@
   }
 
   async function createCompany(data) {
-    await ensureDatabase();
     const name = String(data && data.name_ar || '').trim();
     if (!name) throw new Error('اسم الشركة مطلوب');
     return global.OsamaSoftDB.execute(
@@ -36,24 +29,11 @@
     );
   }
 
-  async function updateCompany(id, data) {
-    await ensureDatabase();
-    const companyId = requiredId(id, 'معرف الشركة');
-    const name = String(data && data.name_ar || '' ).trim();
-    if (!name) throw new Error('اسم الشركة مطلوب');
-    return global.OsamaSoftDB.execute(
-      'UPDATE companies SET name_ar=?, name_en=?, phone=?, email=?, registration_no=?, logo_data=?, watermark_data=?, updated_at=CURRENT_TIMESTAMP WHERE id=?',
-      [name, data.name_en || null, data.phone || null, data.email || null, data.registration_no || null, data.logo_data || null, data.watermark_data || null, companyId]
-    );
-  }
-
   async function branches(companyId) {
-    await ensureDatabase();
     return global.OsamaSoftDB.query('SELECT * FROM branches WHERE company_id=? ORDER BY id', [requiredId(companyId, 'معرف الشركة')]);
   }
 
   async function createBranch(data) {
-    await ensureDatabase();
     const companyId = requiredId(data && data.company_id, 'معرف الشركة');
     const code = String(data && data.code || '').trim();
     const name = String(data && data.name_ar || '').trim();
@@ -85,7 +65,6 @@
     companies,
     getCompany,
     createCompany,
-    updateCompany,
     branches,
     createBranch,
     users,

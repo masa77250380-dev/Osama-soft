@@ -10529,7 +10529,7 @@ document.getElementById('runBS').addEventListener('click', () => {
       document.getElementById('backupFolder').value = state.backupSettings.backupFolder;
     }
 
-    document.getElementById('saveCompanySettings').addEventListener('click', async () => {
+    document.getElementById('saveCompanySettings').addEventListener('click', () => {
       state.company.name = document.getElementById('companyName').value;
       state.company.nameEn = document.getElementById('companyNameEn').value;
       state.company.phone = document.getElementById('companyPhone').value;
@@ -10563,28 +10563,6 @@ document.getElementById('runBS').addEventListener('click', () => {
 
       saveState();
       updateLogos();
-
-      try {
-        const registry = loadWorkspaceRegistry();
-        const currentWorkspace = registry.find(w => w.storageKey === KEY);
-        const repo = window.OsamaSoftOrganizationRepository;
-        if (currentWorkspace && currentWorkspace.dbCompanyId && repo) {
-          await repo.updateCompany(currentWorkspace.dbCompanyId, {
-            name_ar: state.company.name,
-            name_en: state.company.nameEn,
-            phone: state.company.phone,
-            email: state.company.email,
-            registration_no: state.company.regNo,
-            logo_data: state.company.logo || null,
-            watermark_data: state.company.watermark || null
-          });
-        }
-      } catch (error) {
-        console.error("SQLite company update failed:", error);
-        alert("⚠️ تم حفظ البيانات محليًا، لكن تعذر تحديث قاعدة SQLite.");
-        return;
-      }
-
       alert('✅ تم حفظ بيانات الشركة بنجاح');
     });
 
