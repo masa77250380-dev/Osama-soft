@@ -86,16 +86,60 @@
   async function showTable(name) {
     const box = document.getElementById('dbUiDetail');
     if (!box || !global.OsamaSoftDB) return;
+
     try {
       const columns = await global.OsamaSoftDB.tableInfo(name);
       const rows = await global.OsamaSoftDB.sampleRows(name, 100);
+      const columnNames = columns.map(function (column) {
+        return column.name;
+      });
+
+      let html = `
+        <div class="section-header">
+          <h4>الجدول: ${esc(name)}</h4>
+          <span class="muted">عدد الصفوف المعروضة: ${rows.length} — عدد الأعمدة: ${columnNames.length}</span>
+        </div>
+        <div style="overflow:auto;max-width:100%;border-radius:var(--radius)">
+          <table>
+            <thead>
+              <tr>`;
+
+      if (columnNames.length) {
+        columnNames.forEach(function (columnName) {
+          html += '<th style="white-space:nowrap">' + esc(columnName) + '</th>';
+        });
+      } else {
+        html += '<th>لا توجد أعمدة</th>';
+      }
+
+      html += `
+              </tr>
+            </thead>
+            <tbody>`;
+
+      if (!rows.length) {
+        html += '<tr><td colspan="' + Math.max(columnNames.length, 1) + '" style="text-align:center">لا توجد بيانات في هذا الجدول</td></tr>';
+      } else {
+        rows.forEach(function (row) {
+          html += '<tr>';
+
+          columnNames.forEach(function (columnName) {
+            const value = row[columnName];
+            const displayValue = value === null || value === undefined ? 'NULL' : String(value);
+            html += '<td style="white-space:pre-wrap;max-width:360px;word-break:break-word">' + esc(displayValue) + '</td>';
+          });
+
+          html += '</tr>';
+        });
+      }
+
+      html += `
+            </tbody>
+          </table>
+        </div>`;
+
       box.style.display = '';
-      box.innerHTML = `
-        <h4>الجدول: ${esc(name)}</h4>
-        <h5>الأعمدة</h5>
-        <pre style="white-space:pre-wrap;direction:ltr;text-align:left;overflow:auto">${esc(JSON.stringify(columns, null, 2))}</pre>
-        <h5>الصفوف — حتى 100 صف</h5>
-        <pre style="white-space:pre-wrap;direction:ltr;text-align:left;overflow:auto;max-height:420px">${esc(JSON.stringify(rows, null, 2))}</pre>`;
+      box.innerHTML = html;
       box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } catch (error) {
       box.style.display = '';
