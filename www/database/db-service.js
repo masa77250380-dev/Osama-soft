@@ -8,8 +8,8 @@
   'use strict';
 
   const DB_NAME = 'osama_soft_accounting';
-  const DB_VERSION = 1;
-  const SCHEMA_MIGRATION_NAME = '001_initial_schema';
+  const DB_VERSION = 2;
+  const SCHEMA_MIGRATION_NAME = '002_organization_fields';
   let native = null;
   let initPromise = null;
 
@@ -93,10 +93,23 @@
       for (const statement of splitSqlScript(schema)) await execute(statement);
       const migration = await query('SELECT version, name, applied_at FROM schema_migrations WHERE version=? LIMIT 1', [DB_VERSION]);
       if (!migration.length) {
+        const companyColumns = await query('PRAGMA table_info(companies)');
+        const hasAddressAr = companyColumns.some(c => c.name === 'address_ar');
+        const hasAddressEn = companyColumns.some(c => c.name === 'address_en');
+
+        if (!hasAddressAr) {
+          await execute('ALTER TABLE companies ADD COLUMN address_ar TEXT');
+        }
+
+        if (!hasAddressEn) {
+          await execute('ALTER TABLE companies ADD COLUMN address_en TEXT');
+        }
+
         const seedResponse = await fetch('database/seed.sql', { cache: 'no-store' });
         if (!seedResponse.ok) throw new Error('تعذر تحميل البيانات المرجعية: HTTP ' + seedResponse.status);
         const seed = await seedResponse.text();
         for (const statement of splitSqlScript(seed)) await execute(statement);
+
         await execute('INSERT INTO schema_migrations(version,name) VALUES(?,?)', [DB_VERSION, SCHEMA_MIGRATION_NAME]);
       }
       return { database: DB_NAME, version: DB_VERSION, engine: 'native-sqlite' };

@@ -10335,12 +10335,63 @@ document.getElementById('runBS').addEventListener('click', () => {
       document.getElementById('newWorkspaceBranch').value = w.branchName;
       window.scrollTo({ top: document.getElementById('newWorkspaceCompany').closest('.card').offsetTop, behavior: 'smooth' });
     }
+
+    async function updateWorkspaceInSQLite(entry, companyName, branchName) {
+      const repo = window.OsamaSoftOrganizationRepository;
+      if (!repo) throw new Error('مستودع الشركات والفروع غير متاح');
+
+      if (!entry || !entry.dbCompanyId || !entry.dbBranchId) {
+        const link = await syncWorkspaceToSQLite(companyName, branchName, '');
+        if (!link || !link.companyId || !link.branchId) {
+          throw new Error('تعذر ربط مساحة العمل الحالية بسجلات SQLite');
+        }
+
+        entry.dbCompanyId = link.companyId;
+        entry.dbBranchId = link.branchId;
+      }
+
+      const currentCompany = await repo.getCompany(entry.dbCompanyId);
+      const currentBranch = await repo.getBranch(entry.dbBranchId);
+
+      if (!currentCompany) {
+        throw new Error('الشركة المرتبطة بمساحة العمل غير موجودة في SQLite');
+      }
+
+      if (!currentBranch) {
+        throw new Error('الفرع المرتبط بمساحة العمل غير موجود في SQLite');
+      }
+
+      if (currentBranch.company_id !== entry.dbCompanyId) {
+        throw new Error('الفرع المرتبط لا يتبع الشركة المرتبطة بمساحة العمل');
+      }
+
+      await repo.updateCompany(entry.dbCompanyId, {
+        name_ar: companyName
+      });
+
+      await repo.updateBranch(entry.dbBranchId, {
+        company_id: entry.dbCompanyId,
+        code: currentBranch.code,
+        name_ar: branchName,
+        name_en: currentBranch.name_en,
+        address_ar: currentBranch.address_ar,
+        address_en: currentBranch.address_en,
+        phone: currentBranch.phone,
+        email: currentBranch.email,
+        is_main: currentBranch.is_main
+      });
+
+      return {
+        companyId: entry.dbCompanyId,
+        branchId: entry.dbBranchId
+      };
+    }
     document.getElementById('clearWorkspaceFormBtn')?.addEventListener('click', () => {
       document.getElementById('editingWorkspaceId').value = '';
       document.getElementById('newWorkspaceCompany').value = '';
       document.getElementById('newWorkspaceBranch').value = '';
     });
-    document.getElementById('addWorkspaceBtn')?.addEventListener('click', () => {
+    document.getElementById('addWorkspaceBtn')?.addEventListener('click', async () => {
       const companyName = document.getElementById('newWorkspaceCompany').value.trim();
       const branchName = document.getElementById('newWorkspaceBranch').value.trim();
       const editingId = document.getElementById('editingWorkspaceId').value;
@@ -10349,15 +10400,45 @@ document.getElementById('runBS').addEventListener('click', () => {
 
       if (editingId) {
         const entry = registry.find(w => w.id === editingId);
-        if (entry) {
+        if (!entry) {
+          alert('تعذر العثور على مساحة العمل المطلوب تعديلها');
+          return;
+        }
+
+        const oldCompanyName = entry.companyName;
+        const oldBranchName = entry.branchName;
+
+        if (registry.some(w =>
+          w.id !== editingId &&
+          w.companyName === companyName &&
+          w.branchName === branchName
+        )) {
+          alert('يوجد بالفعل فرع بهذا الاسم لنفس الشركة');
+          return;
+        }
+
+        try {
+          await updateWorkspaceInSQLite(entry, companyName, branchName);
+
           entry.companyName = companyName;
           entry.branchName = branchName;
-          // إن كانت هذه مساحة العمل النشطة حالياً، حدّث بيانات الشركة المعروضة أيضاً
+          saveWorkspaceRegistry(registry);
+
           if (entry.storageKey === KEY) {
             state.company.name = companyName;
             saveState();
           }
+
+          document.getElementById('clearWorkspaceFormBtn').click();
+          renderWorkspacesTable();
+
+          alert('✅ تم تعديل الشركة/الفرع وتحديث قاعدة SQLite بنجاح');
+        } catch (error) {
+          console.error('SQLite workspace update failed:', error);
+          alert('❌ لم يتم التعديل في SQLite، لذلك لم يتم تغيير السجل المحلي.\n\n' + (error.message || error));
         }
+
+        return;
       } else {
         // منع إنشاء فرع بنفس اسم الشركة والفرع لفرع موجود مسبقاً
         if (registry.some(w => w.companyName === companyName && w.branchName === branchName)) {
@@ -10383,13 +10464,38 @@ document.getElementById('runBS').addEventListener('click', () => {
       renderWorkspacesTable();
       alert('✅ تم الحفظ. سيظهر خيار الاختيار في شاشة تسجيل الدخول القادمة.');
     });
-    function deleteWorkspace(id) {
-      if (!confirm('حذف هذه الشركة/الفرع سيحذف بيانات تخزينه المحلي نهائياً. هل أنت متأكد؟')) return;
+    async function deleteWorkspace(id) {
+      if (!confirm('حذف هذه الشركة/الفرع سيؤرشف الفرع في قاعدة SQLite ويزيل مساحة العمل المحلية من هذا الجهاز. هل أنت متأكد؟')) return;
+
       const registry = loadWorkspaceRegistry();
       const entry = registry.find(w => w.id === id);
-      if (entry) localStorage.removeItem(entry.storageKey);
-      saveWorkspaceRegistry(registry.filter(w => w.id !== id));
-      renderWorkspacesTable();
+
+      if (!entry) {
+        alert('تعذر العثور على مساحة العمل');
+        return;
+      }
+
+      if (entry.id === 'default') {
+        alert('لا يمكن حذف مساحة العمل الافتراضية');
+        return;
+      }
+
+      const repo = window.OsamaSoftOrganizationRepository;
+
+      try {
+        if (repo && entry.dbBranchId) {
+          await repo.deactivateBranch(entry.dbBranchId);
+        }
+
+        localStorage.removeItem(entry.storageKey);
+        saveWorkspaceRegistry(registry.filter(w => w.id !== id));
+        renderWorkspacesTable();
+
+        alert('✅ تم حذف مساحة العمل المحلية وأرشفة الفرع في SQLite');
+      } catch (error) {
+        console.error('SQLite workspace delete failed:', error);
+        alert('❌ لم يتم الحذف لأن تحديث قاعدة SQLite فشل.\n\n' + (error.message || error));
+      }
     }
 
     function renderUsersTable() {
@@ -10575,6 +10681,8 @@ document.getElementById('runBS').addEventListener('click', () => {
             phone: state.company.phone,
             email: state.company.email,
             registration_no: state.company.regNo,
+            address_ar: state.company.address || null,
+            address_en: state.company.addressEn || null,
             logo_data: state.company.logo || null,
             watermark_data: state.company.watermark || null
           });
@@ -10841,16 +10949,38 @@ document.getElementById('runBS').addEventListener('click', () => {
       }
     }
 
-    // Start the application
-    if (state.currentUser) {
-      showMainApp();
-    } else {
-      showLoginScreen();
+    // Start the application after database repositories are loaded
+    async function startOsamaSoftApplication() {
+      try {
+        const repo = window.OsamaSoftOrganizationRepository;
+
+        if (!repo || typeof repo.ensureDefaultOrganization !== 'function') {
+          throw new Error("مستودع الشركات والفروع غير متاح");
+        }
+
+        // التأكد أولاً من وجود الشركة الرئيسية والفرع الرئيسي في SQLite
+        await repo.ensureDefaultOrganization();
+
+        if (state.currentUser) {
+          await showMainApp();
+        } else {
+          showLoginScreen();
+        }
+
+        initializeDefaultAccounts();
+      } catch (error) {
+        console.error("Osama Soft startup organization error:", error);
+
+        alert(
+          "تعذر تهيئة قاعدة بيانات الشركات والفروع.\\n\\n" +
+          (error && error.message
+            ? error.message
+            : "خطأ غير معروف")
+        );
+      }
     }
-    
-    initializeDefaultAccounts();
-    
-    // ==========================================
+
+        // ==========================================
 // دوال طباعة السند الحالي (توضع في نهاية السكربت)
 // ==========================================
 
@@ -10888,5 +11018,8 @@ function printCurrentJournal() {
 <script src="database/db-service.js"></script>
 <script src="database/database-ui.js"></script>
 <script src="database/repositories/organization-repository.js"></script>
+<script>
+  startOsamaSoftApplication();
+</script>
 </body>
 </html>

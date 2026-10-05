@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS companies (
   id INTEGER PRIMARY KEY,
   name_ar TEXT NOT NULL,
   name_en TEXT,
+  address_ar TEXT,
+  address_en TEXT,
   phone TEXT,
   email TEXT,
   registration_no TEXT,
