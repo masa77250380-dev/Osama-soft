@@ -8,8 +8,8 @@
   'use strict';
 
   const DB_NAME = 'osama_soft_accounting';
-  const DB_VERSION = 2;
-  const SCHEMA_MIGRATION_NAME = '002_organization_fields';
+  const DB_VERSION = 3;
+  const SCHEMA_MIGRATION_NAME = '003_company_number';
   let native = null;
   let initPromise = null;
 
@@ -96,6 +96,7 @@
         const companyColumns = await query('PRAGMA table_info(companies)');
         const hasAddressAr = companyColumns.some(c => c.name === 'address_ar');
         const hasAddressEn = companyColumns.some(c => c.name === 'address_en');
+      const hasCompanyNo = companyColumns.some(c => c.name === 'company_no');
 
         if (!hasAddressAr) {
           await execute('ALTER TABLE companies ADD COLUMN address_ar TEXT');
@@ -103,6 +104,9 @@
 
         if (!hasAddressEn) {
           await execute('ALTER TABLE companies ADD COLUMN address_en TEXT');
+      }
+      if (!hasCompanyNo) {
+        await execute('ALTER TABLE companies ADD COLUMN company_no TEXT');
         }
 
         const seedResponse = await fetch('database/seed.sql', { cache: 'no-store' });

@@ -2427,6 +2427,7 @@
               <div><label>البريد الإلكتروني</label><input id="companyEmail" placeholder="البريد الإلكتروني" /></div>
           </div>
           <div class="grid cols-2" style="margin-top:1rem">
+              <div><label>رقم الشركة الداخلي</label><input id="companyNo" placeholder="رقم الشركة" /></div>
               <div><label>رقم السجل التجاري</label><input id="companyRegNo" placeholder="رقم السجل" /></div>
               <div><label>العنوان</label><input id="companyAddress" placeholder="عنوان الشركة الكامل" /></div>
           </div>
@@ -2580,6 +2581,7 @@ function appPrint() {
           phone: '+966 5X XXX XXXX',
           email: 'info@company.com',
           regNo: '12345', 
+          companyNo: '',
           logo: '',
           watermark: ''
         },
@@ -10621,6 +10623,7 @@ document.getElementById('runBS').addEventListener('click', () => {
       document.getElementById('companyPhone').value = state.company.phone;
       document.getElementById('companyEmail').value = state.company.email;
       document.getElementById('companyRegNo').value = state.company.regNo;
+      document.getElementById('companyNo').value = state.company.companyNo || '';
       document.getElementById('companyAddress').value = state.company.address;
       document.getElementById('companyAddressEn').value = state.company.addressEn;
 
@@ -10641,6 +10644,7 @@ document.getElementById('runBS').addEventListener('click', () => {
       state.company.phone = document.getElementById('companyPhone').value;
       state.company.email = document.getElementById('companyEmail').value;
       state.company.regNo = document.getElementById('companyRegNo').value;
+      state.company.companyNo = document.getElementById('companyNo').value.trim();
       state.company.address = document.getElementById('companyAddress').value;
       state.company.addressEn = document.getElementById('companyAddressEn').value;
 
@@ -10681,6 +10685,7 @@ document.getElementById('runBS').addEventListener('click', () => {
             phone: state.company.phone,
             email: state.company.email,
             registration_no: state.company.regNo,
+            company_no: state.company.companyNo || null,
             address_ar: state.company.address || null,
             address_en: state.company.addressEn || null,
             logo_data: state.company.logo || null,
@@ -10961,6 +10966,43 @@ document.getElementById('runBS').addEventListener('click', () => {
         // التأكد أولاً من وجود الشركة الرئيسية والفرع الرئيسي في SQLite
         await repo.ensureDefaultOrganization();
 
+        // ربط مساحة العمل الحالية بسجلات الشركة والفرع في SQLite عند فقدان الربط
+        const workspaceRegistry = loadWorkspaceRegistry();
+        const activeWorkspace = workspaceRegistry.find(
+          entry => entry.storageKey === KEY
+        );
+
+        if (activeWorkspace &&
+            (!activeWorkspace.dbCompanyId || !activeWorkspace.dbBranchId)) {
+          const workspaceLink = await syncWorkspaceToSQLite(
+            activeWorkspace.companyName,
+            activeWorkspace.branchName,
+            ""
+          );
+
+          if (!workspaceLink.companyId || !workspaceLink.branchId) {
+            throw new Error("تعذر ربط مساحة العمل بالشركة والفرع في SQLite");
+          }
+
+          activeWorkspace.dbCompanyId = workspaceLink.companyId;
+          activeWorkspace.dbBranchId = workspaceLink.branchId;
+          saveWorkspaceRegistry(workspaceRegistry);
+        }
+
+        // يمنع الدخول حتى اكتمال التركيب المحفوظ في SQLite
+        const setupRows = activeWorkspace && activeWorkspace.dbCompanyId && activeWorkspace.dbBranchId
+    ? await window.OsamaSoftDB.query(
+        `SELECT setting_value FROM app_settings
+         WHERE company_id=? AND branch_id=? AND setting_group=? AND setting_key=?
+         LIMIT 1`,
+        [Number(activeWorkspace.dbCompanyId), Number(activeWorkspace.dbBranchId), 'system', 'initial_setup_completed']
+      )
+    : [];
+        if (!setupRows.length || setupRows[0].setting_value !== '1') {
+          await window.OsamaSoftSetupWizard.show();
+          return;
+        }
+
         if (state.currentUser) {
           await showMainApp();
         } else {
@@ -11018,6 +11060,7 @@ function printCurrentJournal() {
 <script src="database/db-service.js"></script>
 <script src="database/database-ui.js"></script>
 <script src="database/repositories/organization-repository.js"></script>
+<script src="initial-setup.js"></script>
 <script>
   startOsamaSoftApplication();
 </script>

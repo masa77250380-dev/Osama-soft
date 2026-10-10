@@ -57,11 +57,12 @@
 
     return global.OsamaSoftDB.execute(
       `INSERT INTO companies
-       (name_ar,name_en,address_ar,address_en,phone,email,registration_no,
+       (name_ar,company_no,name_en,address_ar,address_en,phone,email,registration_no,
         logo_data,watermark_data,is_active)
-       VALUES (?,?,?,?,?,?,?,?,?,1)`,
+       VALUES (?,?,?,?,?,?,?,?,?,?,1)`,
       [
         name,
+        String(data.company_no || '').trim() || null,
         data.name_en || null,
         data.address_ar || null,
         data.address_en || null,
@@ -87,6 +88,7 @@
     return global.OsamaSoftDB.execute(
       `UPDATE companies
        SET name_ar=?,
+           company_no=CASE WHEN ? IS NULL THEN company_no ELSE ? END,
            name_en=?,
            address_ar=?,
            address_en=?,
@@ -100,6 +102,8 @@
        WHERE id=?`,
       [
         name,
+        data.company_no === undefined ? null : String(data.company_no).trim(),
+        data.company_no === undefined ? null : (String(data.company_no).trim() || null),
         data.name_en || null,
         data.address_ar || null,
         data.address_en || null,

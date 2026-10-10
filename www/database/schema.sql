@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 
 CREATE TABLE IF NOT EXISTS companies (
   id INTEGER PRIMARY KEY,
+  company_no TEXT,
   name_ar TEXT NOT NULL,
   name_en TEXT,
   address_ar TEXT,
